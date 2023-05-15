@@ -4,6 +4,10 @@ from typing import List
 import smtplib
 from email.mime.text import MIMEText
 from typing import List
+import firebase_admin
+from firebase_admin import credentials, messaging
+
+cred = credentials.Certificate('path/to/service-account-key.json')
 
 app = FastAPI()
 
@@ -30,6 +34,17 @@ def send_email(subject: str, body: str, recipients: str):
         server.starttls()
         server.login(smtp_username, smtp_password)
         server.send_message(msg)
+        
+    notification = messaging.Notification(title='New Durvey Email', body=subject)
+    message = messaging.Message(
+        notification=notification,
+        android=messaging.AndroidConfig(
+            notification=messaging.AndroidNotification(priority='high'),
+        ),
+        topic='survey_emails',
+    )
+    response = messaging.send(message)
+    print('Push notification sent:', response)
         
 def create_pull_request(question: str, answer: str):
     
